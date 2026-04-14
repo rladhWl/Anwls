@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원소 이름 퀴즈</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #2a2a3a;
+    --accent: #7cffd4;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px 20px 24px;
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(124,255,212,0.04) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(255,107,107,0.04) 0%, transparent 60%);
+  }
+
+  .quiz-container {
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 16px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    transition: width 0.4s ease;
+  }
+
+  .progress-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+
+  .group-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .symbol-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+    text-shadow: 0 0 40px rgba(124,255,212,0.3);
+  }
+
+  .atomic-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .answer-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .answer-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,255,212,0.08);
+  }
+
+  .answer-input.correct {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,255,212,0.1);
+  }
+
+  .answer-input.wrong {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(255,107,107,0.1);
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .feedback {
+    min-height: 24px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    font-family: 'Space Mono', monospace;
+    transition: opacity 0.2s;
+  }
+
+  .feedback.correct { color: var(--accent); }
+  .feedback.wrong { color: var(--accent2); }
+  .feedback.hint { color: var(--accent3); }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  .btn-primary:hover {
+    background: #a0ffe0;
+    transform: translateY(-1px);
+  }
+
+  .btn-skip {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    margin-top: 8px;
+    font-size: 11px;
+  }
+
+  .btn-skip:hover { color: var(--text); border-color: var(--muted); }
+
+  .score-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 14px;
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-item .val {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .score-item .lbl {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .correct-val { color: var(--accent); }
+  .wrong-val { color: var(--accent2); }
+
+  /* Result screen */
+  .result-screen {
+    text-align: center;
+  }
+
+  .result-emoji {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .result-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+
+  .result-score {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .wrong-list {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .wrong-list h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .wrong-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .wrong-item:last-child { border-bottom: none; }
+
+  .wrong-sym {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: var(--accent2);
+    width: 40px;
+  }
+
+  .wrong-ans {
+    color: var(--muted);
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+  }
+
+  .wrong-correct {
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+  }
+
+  .hidden { display: none; }
+
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+
+  .filter-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  .filter-btn:hover:not(.active) {
+    border-color: var(--muted);
+    color: var(--text);
+  }
+
+  .charge-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent3);
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="quiz-container">
+
+  <!-- Quiz Screen -->
+  <div id="quiz-screen">
+    <div class="header">
+      <h1>⚗ Element Quiz</h1>
+      <div class="filter-row">
+        <button class="filter-btn active" id="f-all"      onclick="setFilter('all')">전체</button>
+        <button class="filter-btn"        id="f-element"  onclick="setFilter('element')">원소</button>
+        <button class="filter-btn"        id="f-ion1"     onclick="setFilter('ion1')">유형1 이온</button>
+        <button class="filter-btn"        id="f-ion2"     onclick="setFilter('ion2')">유형2 이온</button>
+        <button class="filter-btn"        id="f-poly"     onclick="setFilter('poly')">다원자 이온</button>
+        <button class="filter-btn"        id="f-comp1"    onclick="setFilter('comp1')">유형I 화합물</button>
+        <button class="filter-btn"        id="f-comp2"    onclick="setFilter('comp2')">유형II 화합물</button>
+        <button class="filter-btn"        id="f-comp3"    onclick="setFilter('comp3')">유형III 화합물</button>
+        <button class="filter-btn"        id="f-comppoly" onclick="setFilter('comppoly')">다원자이온 화합물</button>
+        <button class="filter-btn"        id="f-acid"     onclick="setFilter('acid')">산(acid)</button>
+        <button class="filter-btn"        id="f-valence"  onclick="setFilter('valence')">전하구분 퀴즈</button>
+        <button class="filter-btn"        id="f-solubility" onclick="setFilter('solubility')">용해도 규칙</button>
+        <button class="filter-btn"        id="f-oldname"  onclick="setFilter('oldname')">관용명(ferric 등)</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-text" id="progress-text">1 / 30</div>
+    </div>
+
+    <div class="card">
+      <div class="group-tag" id="group-tag">Group 1</div>
+      <div class="symbol-display" id="symbol">H</div>
+      <div class="charge-badge" id="charge-badge"></div>
+      <div class="atomic-number" id="atomic-num">원자번호 1</div>
+
+      <div class="input-group">
+        <input type="text" class="answer-input" id="answer-input"
+               placeholder="영어 이름 입력..." autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <button class="btn btn-primary" id="submit-btn" onclick="submitAnswer()">확인</button>
+      <button class="btn btn-skip" onclick="skipQuestion()">모르겠어 → 다음</button>
+    </div>
+
+    <div class="score-row">
+      <div class="score-item">
+        <div class="val correct-val" id="correct-count">0</div>
+        <div class="lbl">맞음</div>
+      </div>
+      <div class="score-item">
+        <div class="val wrong-val" id="wrong-count">0</div>
+        <div class="lbl">틀림</div>
+      </div>
+      <div class="score-item">
+        <div class="val" id="remain-count">30</div>
+        <div class="lbl">남음</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="result-screen" class="hidden">
+    <div class="card result-screen">
+      <div class="result-emoji" id="result-emoji">🎉</div>
+      <div class="result-title" id="result-title">퀴즈 완료!</div>
+      <div class="result-score" id="result-score"></div>
+
+      <div class="wrong-list" id="wrong-list-container">
+        <h3>❌ 틀린 문제</h3>
+        <div id="wrong-items"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="restartQuiz()">다시 풀기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// type: 'element' | 'ion1' | 'ion2' | 'poly'
+// charge: 표시용 (이온만)
+const allItems = [
+  // ── 원소 ──────────────────────────────────────────
+  { type:'element', symbol:'H',  name:'hydrogen',   num:1,  group:'1족' },
+  { type:'element', symbol:'He', name:'helium',     num:2,  group:'18족(비활성)' },
+  { type:'element', symbol:'Li', name:'lithium',    num:3,  group:'1족' },
+  { type:'element', symbol:'Be', name:'beryllium',  num:4,  group:'2족' },
+  { type:'element', symbol:'B',  name:'boron',      num:5,  group:'13족' },
+  { type:'element', symbol:'C',  name:'carbon',     num:6,  group:'14족' },
+  { type:'element', symbol:'N',  name:'nitrogen',   num:7,  group:'15족' },
+  { type:'element', symbol:'O',  name:'oxygen',     num:8,  group:'16족' },
+  { type:'element', symbol:'F',  name:'fluorine',   num:9,  group:'17족(할로젠)' },
+  { type:'element', symbol:'Ne', name:'neon',       num:10, group:'18족(비활성)' },
+  { type:'element', symbol:'Na', name:'sodium',     num:11, group:'1족' },
+  { type:'element', symbol:'Mg', name:'magnesium',  num:12, group:'2족' },
+  { type:'element', symbol:'Al', name:'aluminum',   num:13, group:'13족' },
+  { type:'element', symbol:'Si', name:'silicon',    num:14, group:'14족' },
+  { type:'element', symbol:'P',  name:'phosphorus', num:15, group:'15족' },
+  { type:'element', symbol:'S',  name:'sulfur',     num:16, group:'16족' },
+  { type:'element', symbol:'Cl', name:'chlorine',   num:17, group:'17족(할로젠)' },
+  { type:'element', symbol:'Ar', name:'argon',      num:18, group:'18족(비활성)' },
+  { type:'element', symbol:'K',  name:'potassium',  num:19, group:'1족' },
+  { type:'element', symbol:'Ca', name:'calcium',    num:20, group:'2족' },
+  { type:'element', symbol:'Sc', name:'scandium',   num:21, group:'전이금속' },
+  { type:'element', symbol:'Ti', name:'titanium',   num:22, group:'전이금속' },
+  { type:'element', symbol:'V',  name:'vanadium',   num:23, group:'전이금속' },
+  { type:'element', symbol:'Cr', name:'chromium',   num:24, group:'전이금속' },
+  { type:'element', symbol:'Mn', name:'manganese',  num:25, group:'전이금속' },
+  { type:'element', symbol:'Fe', name:'iron',       num:26, group:'전이금속' },
+  { type:'element', symbol:'Co', name:'cobalt',     num:27, group:'전이금속' },
+  { type:'element', symbol:'Ni', name:'nickel',     num:28, group:'전이금속' },
+  { type:'element', symbol:'Cu', name:'copper',     num:29, group:'전이금속' },
+  { type:'element', symbol:'Zn', name:'zinc',       num:30, group:'전이금속' },
+  { type:'element', symbol:'As', name:'arsenic',    num:33, group:'15족' },
+  { type:'element', symbol:'Br', name:'bromine',    num:35, group:'17족(할로젠)' },
+  { type:'element', symbol:'Kr', name:'krypton',    num:36, group:'18족(비활성)' },
+  { type:'element', symbol:'Rb', name:'rubidium',   num:37, group:'1족' },
+  { type:'element', symbol:'Sr', name:'strontium',  num:38, group:'2족' },
+  { type:'element', symbol:'Ag', name:'silver',     num:47, group:'전이금속' },
+  { type:'element', symbol:'Cd', name:'cadmium',    num:48, group:'전이금속' },
+  { type:'element', symbol:'Sn', name:'tin',        num:50, group:'14족' },
+  { type:'element', symbol:'Sb', name:'antimony',   num:51, group:'15족' },
+  { type:'element', symbol:'I',  name:'iodine',     num:53, group:'17족(할로젠)' },
+  { type:'element', symbol:'Xe', name:'xenon',      num:54, group:'18족(비활성)' },
+  { type:'element', symbol:'Cs', name:'cesium',     num:55, group:'1족' },
+  { type:'element', symbol:'Ba', name:'barium',     num:56, group:'2족' },
+  { type:'element', symbol:'W',  name:'tungsten',   num:74, group:'전이금속' },
+  { type:'element', symbol:'Pt', name:'platinum',   num:78, group:'전이금속' },
+  { type:'element', symbol:'Au', name:'gold',       num:79, group:'전이금속' },
+  { type:'element', symbol:'Hg', name:'mercury',    num:80, group:'전이금속' },
+  { type:'element', symbol:'Pb', name:'lead',       num:82, group:'14족' },
+  { type:'element', symbol:'Bi', name:'bismuth',    num:83, group:'15족' },
+  { type:'element', symbol:'Ra', name:'radium',     num:88, group:'2족' },
+  { type:'element', symbol:'U',  name:'uranium',    num:92, group:'악티늄족' },
+  // 교재/노트에서 추가 확인된 원소
+  { type:'element', symbol:'Se', name:'selenium',   num:34, group:'16족' },
+  { type:'element', symbol:'Te', name:'tellurium',  num:52, group:'16족' },
+  { type:'element', symbol:'Rn', name:'radon',      num:86, group:'18족(비활성)' },
+  { type:'element', symbol:'Fr', name:'francium',   num:87, group:'1족' },
+
+  // ── 유형 1 이온 (전하 고정) ────────────────────────
+  { type:'ion1', symbol:'H⁺',  name:'hydrogen ion',   charge:'1+', group:'유형1 이온' },
+  { type:'ion1', symbol:'H⁻',  name:'hydride ion',    charge:'1−', group:'유형1 이온' },
+  { type:'ion1', symbol:'Li⁺',  name:'lithium ion',    charge:'1+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Na⁺',  name:'sodium ion',     charge:'1+', group:'유형1 이온' },
+  { type:'ion1', symbol:'K⁺',   name:'potassium ion',  charge:'1+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Cs⁺',  name:'cesium ion',     charge:'1+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Mg²⁺', name:'magnesium ion',  charge:'2+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Ca²⁺', name:'calcium ion',    charge:'2+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Ba²⁺', name:'barium ion',     charge:'2+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Al³⁺', name:'aluminum ion',   charge:'3+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Ag⁺',  name:'silver ion',     charge:'1+', group:'유형1 이온' },
+  { type:'ion1', symbol:'Zn²⁺', name:'zinc ion',       charge:'2+', group:'유형1 이온' },
+  { type:'ion1', symbol:'F⁻',   name:'fluoride ion',   charge:'1−', group:'유형1 이온' },
+  { type:'ion1', symbol:'Cl⁻',  name:'chloride ion',   charge:'1−', group:'유형1 이온' },
+  { type:'ion1', symbol:'Br⁻',  name:'bromide ion',    charge:'1−', group:'유형1 이온' },
+  { type:'ion1', symbol:'I⁻',   name:'iodide ion',     charge:'1−', group:'유형1 이온' },
+  { type:'ion1', symbol:'O²⁻',  name:'oxide ion',      charge:'2−', group:'유형1 이온' },
+  { type:'ion1', symbol:'S²⁻',  name:'sulfide ion',    charge:'2−', group:'유형1 이온' },
+  { type:'ion1', symbol:'N³⁻',  name:'nitride ion',    charge:'3−', group:'유형1 이온' },
+
+  // ── 유형 2 이온 (전하 가변, 전이금속) ───────────────
+  { type:'ion2', symbol:'Fe²⁺', name:'iron(II) ion',    charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Fe³⁺', name:'iron(III) ion',   charge:'3+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Cu⁺',  name:'copper(I) ion',   charge:'1+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Cu²⁺', name:'copper(II) ion',  charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Co²⁺', name:'cobalt(II) ion',  charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Co³⁺', name:'cobalt(III) ion', charge:'3+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Sn²⁺', name:'tin(II) ion',     charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Sn⁴⁺', name:'tin(IV) ion',     charge:'4+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Pb²⁺', name:'lead(II) ion',    charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Pb⁴⁺', name:'lead(IV) ion',    charge:'4+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Mn²⁺', name:'manganese(II) ion', charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Cr³⁺', name:'chromium(III) ion', charge:'3+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Ni²⁺', name:'nickel(II) ion',  charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Hg₂²⁺',name:'mercury(I) ion',  charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Hg²⁺', name:'mercury(II) ion', charge:'2+', group:'유형2 이온' },
+
+  // ── 관용명 퀴즈 (ferric/ferrous 등) ─────────────────
+  // 이온 기호 보고 관용명(old name) 입력
+  { type:'oldname', symbol:'Fe³⁺', name:'ferric',    charge:'3+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Fe²⁺', name:'ferrous',   charge:'2+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Cu²⁺', name:'cupric',    charge:'2+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Cu⁺',  name:'cuprous',   charge:'1+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Co³⁺', name:'cobaltic',  charge:'3+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Co²⁺', name:'cobaltous', charge:'2+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Sn⁴⁺', name:'stannic',   charge:'4+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Sn²⁺', name:'stannous',  charge:'2+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Pb⁴⁺', name:'plumbic',   charge:'4+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Pb²⁺', name:'plumbous',  charge:'2+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Hg²⁺', name:'mercuric',  charge:'2+', group:'관용명(old name)' },
+  { type:'oldname', symbol:'Hg₂²⁺',name:'mercurous', charge:'1+쌍', group:'관용명(old name)' },
+
+  // ── 다원자 이온 (polyatomic) ─────────────────────
+  { type:'poly', symbol:'NH₄⁺',  name:'ammonium',     charge:'1+', group:'다원자 이온' },
+  { type:'poly', symbol:'OH⁻',   name:'hydroxide',    charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'NO₂⁻',  name:'nitrite',      charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'NO₃⁻',  name:'nitrate',      charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'SO₃²⁻', name:'sulfite',      charge:'2−', group:'다원자 이온' },
+  { type:'poly', symbol:'SO₄²⁻', name:'sulfate',      charge:'2−', group:'다원자 이온' },
+  { type:'poly', symbol:'HSO₄⁻', name:'hydrogen sulfate', charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'CO₃²⁻', name:'carbonate',    charge:'2−', group:'다원자 이온' },
+  { type:'poly', symbol:'HCO₃⁻', name:'bicarbonate',  charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'PO₄³⁻', name:'phosphate',    charge:'3−', group:'다원자 이온' },
+  { type:'poly', symbol:'HPO₄²⁻',name:'hydrogen phosphate', charge:'2−', group:'다원자 이온' },
+  { type:'poly', symbol:'H₂PO₄⁻',name:'dihydrogen phosphate', charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'ClO⁻',  name:'hypochlorite', charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'ClO₂⁻', name:'chlorite',     charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'ClO₃⁻', name:'chlorate',     charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'ClO₄⁻', name:'perchlorate',  charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'CrO₄²⁻',name:'chromate',     charge:'2−', group:'다원자 이온' },
+  { type:'poly', symbol:'Cr₂O₇²⁻',name:'dichromate',  charge:'2−', group:'다원자 이온' },
+  { type:'poly', symbol:'MnO₄⁻', name:'permanganate', charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'C₂H₃O₂⁻',name:'acetate',    charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'CN⁻',   name:'cyanide',      charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'SCN⁻',  name:'thiocyanate',  charge:'1−', group:'다원자 이온' },
+  { type:'poly', symbol:'O₂²⁻',  name:'peroxide',     charge:'2−', group:'다원자 이온' },
+
+  // ── 유형 I 화합물 (금속+비금속, 전하 고정) ────────────
+  // 화학식 보여주고 → 영어 화합물 이름 입력
+  { type:'comp1', symbol:'NaCl',   name:'sodium chloride',     hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'KI',     name:'potassium iodide',    hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'CaS',    name:'calcium sulfide',     hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'CsBr',   name:'cesium bromide',      hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'MgO',    name:'magnesium oxide',     hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'AlCl₃',  name:'aluminum chloride',   hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'CaCl₂',  name:'calcium chloride',    hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'MgBr₂',  name:'magnesium bromide',   hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'CaO',    name:'calcium oxide',       hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'KCl',    name:'potassium chloride',  hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'Li₂O',   name:'lithium oxide',       hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'Na₂S',   name:'sodium sulfide',      hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'AgCl',   name:'silver chloride',     hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'ZnO',    name:'zinc oxide',          hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'Al₂O₃',  name:'aluminum oxide',      hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'BaF₂',   name:'barium fluoride',     hint:'Type I', group:'유형I 화합물' },
+  { type:'comp1', symbol:'SrBr₂',  name:'strontium bromide',   hint:'Type I', group:'유형I 화합물' },
+
+  // ── 유형 II 화합물 (전이금속, 로마 숫자 포함) ──────────
+  { type:'comp2', symbol:'FeCl₃',  name:'iron(iii) chloride',  hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'FeCl₂',  name:'iron(ii) chloride',   hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'FeS',    name:'iron(ii) sulfide',     hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'Fe₂O₃',  name:'iron(iii) oxide',     hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'CuBr',   name:'copper(i) bromide',   hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'CuBr₂',  name:'copper(ii) bromide',  hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'PbO₂',   name:'lead(iv) oxide',      hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'PbO',    name:'lead(ii) oxide',      hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'SnCl₂',  name:'tin(ii) chloride',    hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'SnCl₄',  name:'tin(iv) chloride',    hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'CoCl₂',  name:'cobalt(ii) chloride', hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'CoBr₂',  name:'cobalt(ii) bromide',  hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'CrCl₃',  name:'chromium(iii) chloride', hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'CrO₂',   name:'chromium(iv) oxide',  hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'MnO₂',   name:'manganese(iv) oxide', hint:'Type II', group:'유형II 화합물' },
+  { type:'comp2', symbol:'HgCl₂',  name:'mercury(ii) chloride',hint:'Type II', group:'유형II 화합물' },
+
+  // ── 유형 III 화합물 (비금속+비금속, 접두사) ───────────
+  { type:'comp3', symbol:'CO',     name:'carbon monoxide',         hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'CO₂',    name:'carbon dioxide',          hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'NO₂',    name:'nitrogen dioxide',        hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'N₂O',    name:'dinitrogen monoxide',     hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'N₂O₄',   name:'dinitrogen tetroxide',    hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'N₂O₃',   name:'dinitrogen trioxide',     hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'N₂O₅',   name:'dinitrogen pentoxide',    hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'SO₂',    name:'sulfur dioxide',          hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'SO₃',    name:'sulfur trioxide',         hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'SF₆',    name:'sulfur hexafluoride',     hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'PCl₃',   name:'phosphorus trichloride',  hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'PCl₅',   name:'phosphorus pentachloride',hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'CCl₄',   name:'carbon tetrachloride',    hint:'Type III', group:'유형III 화합물' },
+  { type:'comp3', symbol:'ClF₃',   name:'chlorine trifluoride',    hint:'Type III', group:'유형III 화합물' },
+
+  // ── 다원자이온 포함 화합물 ────────────────────────────
+  { type:'comppoly', symbol:'NaOH',      name:'sodium hydroxide',       hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'KOH',       name:'potassium hydroxide',    hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'Na₂CO₃',   name:'sodium carbonate',       hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'NaHCO₃',   name:'sodium bicarbonate',     hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'HNO₃',     name:'nitric acid',            hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'Ca(OH)₂',  name:'calcium hydroxide',      hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'NH₄Cl',    name:'ammonium chloride',      hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'(NH₄)₂SO₄',name:'ammonium sulfate',       hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'NH₄C₂H₃O₂',name:'ammonium acetate',      hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'Mg(NO₃)₂', name:'magnesium nitrate',      hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'FeSO₄',    name:'iron(ii) sulfate',       hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'FePO₄',    name:'iron(iii) phosphate',    hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'Co(NO₃)₂', name:'cobalt(ii) nitrate',     hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'Co(NO₃)₃', name:'cobalt(iii) nitrate',    hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'CuSO₄',    name:'copper(ii) sulfate',     hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'KClO₃',    name:'potassium chlorate',     hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'KClO₄',    name:'potassium perchlorate',  hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'NH₄ClO₄',  name:'ammonium perchlorate',   hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'KMnO₄',    name:'potassium permanganate',  hint:'polyatomic', group:'다원자이온 화합물' },
+  { type:'comppoly', symbol:'K₂Cr₂O₇',  name:'potassium dichromate',   hint:'polyatomic', group:'다원자이온 화합물' },
+
+  // ── 산 (Acids) ────────────────────────────────────────
+  { type:'acid', symbol:'HF(aq)',  name:'hydrofluoric acid',   hint:'산소 없음', group:'산(acid)' },
+  { type:'acid', symbol:'HCl(aq)', name:'hydrochloric acid',   hint:'산소 없음', group:'산(acid)' },
+  { type:'acid', symbol:'HBr(aq)', name:'hydrobromic acid',    hint:'산소 없음', group:'산(acid)' },
+  { type:'acid', symbol:'HI(aq)',  name:'hydroiodic acid',     hint:'산소 없음', group:'산(acid)' },
+  { type:'acid', symbol:'HCN(aq)', name:'hydrocyanic acid',    hint:'산소 없음', group:'산(acid)' },
+  { type:'acid', symbol:'H₂S(aq)', name:'hydrosulfuric acid',  hint:'산소 없음', group:'산(acid)' },
+  { type:'acid', symbol:'HNO₃',   name:'nitric acid',         hint:'-ate → -ic', group:'산(acid)' },
+  { type:'acid', symbol:'HNO₂',   name:'nitrous acid',        hint:'-ite → -ous', group:'산(acid)' },
+  { type:'acid', symbol:'H₂SO₄',  name:'sulfuric acid',       hint:'-ate → -ic', group:'산(acid)' },
+  { type:'acid', symbol:'H₂SO₃',  name:'sulfurous acid',      hint:'-ite → -ous', group:'산(acid)' },
+  { type:'acid', symbol:'H₃PO₄',  name:'phosphoric acid',     hint:'-ate → -ic', group:'산(acid)' },
+  { type:'acid', symbol:'HC₂H₃O₂',name:'acetic acid',         hint:'-ate → -ic', group:'산(acid)' },
+  { type:'acid', symbol:'HClO₄',  name:'perchloric acid',     hint:'per- -ate → per- -ic', group:'산(acid)' },
+  { type:'acid', symbol:'HClO₃',  name:'chloric acid',        hint:'-ate → -ic', group:'산(acid)' },
+  { type:'acid', symbol:'HClO₂',  name:'chlorous acid',       hint:'-ite → -ous', group:'산(acid)' },
+  { type:'acid', symbol:'HClO',   name:'hypochlorous acid',   hint:'hypo- -ite → hypo- -ous', group:'산(acid)' },
+
+  // ── 전하 구분 퀴즈 (같은 금속, 다른 전하) ─────────────
+  // 화학식 보고 금속 로마숫자 포함 이름 맞추기
+  // Fe: 2+ vs 3+
+  { type:'valence', symbol:'FeCl₂',     name:'iron(ii) chloride',     hint:'Cl⁻×2 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'FeCl₃',     name:'iron(iii) chloride',    hint:'Cl⁻×3 → Fe³⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'FeO',       name:'iron(ii) oxide',        hint:'O²⁻×1 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe₂O₃',     name:'iron(iii) oxide',       hint:'O²⁻×3, Fe×2 → Fe³⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'FeS',       name:'iron(ii) sulfide',      hint:'S²⁻×1 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe₂S₃',     name:'iron(iii) sulfide',     hint:'S²⁻×3, Fe×2 → Fe³⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'FeBr₂',     name:'iron(ii) bromide',      hint:'Br⁻×2 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'FeBr₃',     name:'iron(iii) bromide',     hint:'Br⁻×3 → Fe³⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'FeSO₄',     name:'iron(ii) sulfate',      hint:'SO₄²⁻×1 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe₂(SO₄)₃', name:'iron(iii) sulfate',     hint:'SO₄²⁻×3, Fe×2 → Fe³⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe(OH)₂',   name:'iron(ii) hydroxide',    hint:'OH⁻×2 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe(OH)₃',   name:'iron(iii) hydroxide',   hint:'OH⁻×3 → Fe³⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe(NO₃)₂',  name:'iron(ii) nitrate',      hint:'NO₃⁻×2 → Fe²⁺', group:'전하구분(Fe)' },
+  { type:'valence', symbol:'Fe(NO₃)₃',  name:'iron(iii) nitrate',     hint:'NO₃⁻×3 → Fe³⁺', group:'전하구분(Fe)' },
+  // Cu: 1+ vs 2+
+  { type:'valence', symbol:'CuCl',      name:'copper(i) chloride',    hint:'Cl⁻×1 → Cu⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'CuCl₂',     name:'copper(ii) chloride',   hint:'Cl⁻×2 → Cu²⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'Cu₂O',      name:'copper(i) oxide',       hint:'O²⁻×1, Cu×2 → Cu⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'CuO',       name:'copper(ii) oxide',      hint:'O²⁻×1 → Cu²⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'Cu₂S',      name:'copper(i) sulfide',     hint:'S²⁻×1, Cu×2 → Cu⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'CuS',       name:'copper(ii) sulfide',    hint:'S²⁻×1 → Cu²⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'CuBr',      name:'copper(i) bromide',     hint:'Br⁻×1 → Cu⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'CuBr₂',     name:'copper(ii) bromide',    hint:'Br⁻×2 → Cu²⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'CuSO₄',     name:'copper(ii) sulfate',    hint:'SO₄²⁻×1 → Cu²⁺', group:'전하구분(Cu)' },
+  { type:'valence', symbol:'Cu₂SO₄',    name:'copper(i) sulfate',     hint:'SO₄²⁻×1, Cu×2 → Cu⁺', group:'전하구분(Cu)' },
+  // Co: 2+ vs 3+
+  { type:'valence', symbol:'CoCl₂',     name:'cobalt(ii) chloride',   hint:'Cl⁻×2 → Co²⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'CoCl₃',     name:'cobalt(iii) chloride',  hint:'Cl⁻×3 → Co³⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'CoO',       name:'cobalt(ii) oxide',      hint:'O²⁻×1 → Co²⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'Co₂O₃',     name:'cobalt(iii) oxide',     hint:'O²⁻×3, Co×2 → Co³⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'CoS',       name:'cobalt(ii) sulfide',    hint:'S²⁻×1 → Co²⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'Co₂S₃',     name:'cobalt(iii) sulfide',   hint:'S²⁻×3, Co×2 → Co³⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'Co(NO₃)₂',  name:'cobalt(ii) nitrate',    hint:'NO₃⁻×2 → Co²⁺', group:'전하구분(Co)' },
+  { type:'valence', symbol:'Co(NO₃)₃',  name:'cobalt(iii) nitrate',   hint:'NO₃⁻×3 → Co³⁺', group:'전하구분(Co)' },
+  // Sn: 2+ vs 4+
+  { type:'valence', symbol:'SnCl₂',     name:'tin(ii) chloride',      hint:'Cl⁻×2 → Sn²⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnCl₄',     name:'tin(iv) chloride',      hint:'Cl⁻×4 → Sn⁴⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnO',       name:'tin(ii) oxide',         hint:'O²⁻×1 → Sn²⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnO₂',      name:'tin(iv) oxide',         hint:'O²⁻×2 → Sn⁴⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnS',       name:'tin(ii) sulfide',       hint:'S²⁻×1 → Sn²⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnS₂',      name:'tin(iv) sulfide',       hint:'S²⁻×2 → Sn⁴⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnBr₂',     name:'tin(ii) bromide',       hint:'Br⁻×2 → Sn²⁺', group:'전하구분(Sn)' },
+  { type:'valence', symbol:'SnBr₄',     name:'tin(iv) bromide',       hint:'Br⁻×4 → Sn⁴⁺', group:'전하구분(Sn)' },
+  // Pb: 2+ vs 4+
+  { type:'valence', symbol:'PbCl₂',     name:'lead(ii) chloride',     hint:'Cl⁻×2 → Pb²⁺', group:'전하구분(Pb)' },
+  { type:'valence', symbol:'PbCl₄',     name:'lead(iv) chloride',     hint:'Cl⁻×4 → Pb⁴⁺', group:'전하구분(Pb)' },
+  { type:'valence', symbol:'PbO',       name:'lead(ii) oxide',        hint:'O²⁻×1 → Pb²⁺', group:'전하구분(Pb)' },
+  { type:'valence', symbol:'PbO₂',      name:'lead(iv) oxide',        hint:'O²⁻×2 → Pb⁴⁺', group:'전하구분(Pb)' },
+  { type:'valence', symbol:'PbS',       name:'lead(ii) sulfide',      hint:'S²⁻×1 → Pb²⁺', group:'전하구분(Pb)' },
+  { type:'valence', symbol:'PbS₂',      name:'lead(iv) sulfide',      hint:'S²⁻×2 → Pb⁴⁺', group:'전하구분(Pb)' },
+  { type:'valence', symbol:'Pb(NO₃)₂',  name:'lead(ii) nitrate',      hint:'NO₃⁻×2 → Pb²⁺', group:'전하구분(Pb)' },
+  // Hg: 1+ vs 2+
+  { type:'valence', symbol:'Hg₂Cl₂',    name:'mercury(i) chloride',   hint:'Hg₂²⁺ 쌍 → mercury(I)', group:'전하구분(Hg)' },
+  { type:'valence', symbol:'HgCl₂',     name:'mercury(ii) chloride',  hint:'Cl⁻×2 → Hg²⁺', group:'전하구분(Hg)' },
+  { type:'valence', symbol:'Hg₂O',      name:'mercury(i) oxide',      hint:'Hg₂²⁺ 쌍 → mercury(I)', group:'전하구분(Hg)' },
+  { type:'valence', symbol:'HgO',       name:'mercury(ii) oxide',     hint:'O²⁻×1 → Hg²⁺', group:'전하구분(Hg)' },
+  { type:'valence', symbol:'Hg₂SO₄',    name:'mercury(i) sulfate',    hint:'Hg₂²⁺ 쌍 → mercury(I)', group:'전하구분(Hg)' },
+  { type:'valence', symbol:'HgSO₄',     name:'mercury(ii) sulfate',   hint:'SO₄²⁻×1 → Hg²⁺', group:'전하구분(Hg)' },
+  // Cr: 2+ vs 3+
+  { type:'valence', symbol:'CrCl₂',     name:'chromium(ii) chloride', hint:'Cl⁻×2 → Cr²⁺', group:'전하구분(Cr)' },
+  { type:'valence', symbol:'CrCl₃',     name:'chromium(iii) chloride',hint:'Cl⁻×3 → Cr³⁺', group:'전하구분(Cr)' },
+  { type:'valence', symbol:'CrO',       name:'chromium(ii) oxide',    hint:'O²⁻×1 → Cr²⁺', group:'전하구분(Cr)' },
+  { type:'valence', symbol:'Cr₂O₃',     name:'chromium(iii) oxide',   hint:'O²⁻×3, Cr×2 → Cr³⁺', group:'전하구분(Cr)' },
+  { type:'valence', symbol:'CrSO₄',     name:'chromium(ii) sulfate',  hint:'SO₄²⁻×1 → Cr²⁺', group:'전하구분(Cr)' },
+  { type:'valence', symbol:'Cr₂(SO₄)₃', name:'chromium(iii) sulfate', hint:'SO₄²⁻×3, Cr×2 → Cr³⁺', group:'전하구분(Cr)' },
+  // Mn: 2+ vs 4+
+  { type:'valence', symbol:'MnCl₂',     name:'manganese(ii) chloride',hint:'Cl⁻×2 → Mn²⁺', group:'전하구분(Mn)' },
+  { type:'valence', symbol:'MnO',       name:'manganese(ii) oxide',   hint:'O²⁻×1 → Mn²⁺', group:'전하구분(Mn)' },
+  { type:'valence', symbol:'MnO₂',      name:'manganese(iv) oxide',   hint:'O²⁻×2 → Mn⁴⁺', group:'전하구분(Mn)' },
+  { type:'valence', symbol:'MnS',       name:'manganese(ii) sulfide', hint:'S²⁻×1 → Mn²⁺', group:'전하구분(Mn)' },
+
+  // ── 용해도 규칙 (soluble / insoluble) ────────────────
+  { type:'solubility', symbol:'NaNO₃',   name:'soluble',   hint:'NO₃⁻ 염 → 모두 가용성',           group:'용해도 규칙' },
+  { type:'solubility', symbol:'KNO₃',    name:'soluble',   hint:'K⁺ 염 → 모두 가용성',             group:'용해도 규칙' },
+  { type:'solubility', symbol:'NH₄Cl',   name:'soluble',   hint:'NH₄⁺ 염 → 모두 가용성',           group:'용해도 규칙' },
+  { type:'solubility', symbol:'KCl',     name:'soluble',   hint:'K⁺ + Cl⁻ → 가용성',              group:'용해도 규칙' },
+  { type:'solubility', symbol:'NaCl',    name:'soluble',   hint:'Na⁺ 염 → 모두 가용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'AgNO₃',   name:'soluble',   hint:'NO₃⁻ 염 → 모두 가용성',           group:'용해도 규칙' },
+  { type:'solubility', symbol:'AgCl',    name:'insoluble', hint:'Cl⁻ 염 예외: Ag⁺',               group:'용해도 규칙' },
+  { type:'solubility', symbol:'PbCl₂',   name:'insoluble', hint:'Cl⁻ 염 예외: Pb²⁺',              group:'용해도 규칙' },
+  { type:'solubility', symbol:'Hg₂Cl₂',  name:'insoluble', hint:'Cl⁻ 염 예외: Hg₂²⁺',             group:'용해도 규칙' },
+  { type:'solubility', symbol:'MgSO₄',   name:'soluble',   hint:'SO₄²⁻ 염 → 대부분 가용성',        group:'용해도 규칙' },
+  { type:'solubility', symbol:'Na₂SO₄',  name:'soluble',   hint:'Na⁺ 염 → 모두 가용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'BaSO₄',   name:'insoluble', hint:'SO₄²⁻ 예외: Ba²⁺',               group:'용해도 규칙' },
+  { type:'solubility', symbol:'PbSO₄',   name:'insoluble', hint:'SO₄²⁻ 예외: Pb²⁺',               group:'용해도 규칙' },
+  { type:'solubility', symbol:'CaSO₄',   name:'insoluble', hint:'SO₄²⁻ 예외: Ca²⁺',               group:'용해도 규칙' },
+  { type:'solubility', symbol:'NaOH',    name:'soluble',   hint:'OH⁻ 예외: Na⁺ → 가용성',          group:'용해도 규칙' },
+  { type:'solubility', symbol:'KOH',     name:'soluble',   hint:'OH⁻ 예외: K⁺ → 가용성',           group:'용해도 규칙' },
+  { type:'solubility', symbol:'Ba(OH)₂', name:'soluble',   hint:'OH⁻ 예외: Ba²⁺ → 가용성',         group:'용해도 규칙' },
+  { type:'solubility', symbol:'Ca(OH)₂', name:'insoluble', hint:'OH⁻ → 대부분 난용성',              group:'용해도 규칙' },
+  { type:'solubility', symbol:'Fe(OH)₃', name:'insoluble', hint:'OH⁻ → 대부분 난용성',              group:'용해도 규칙' },
+  { type:'solubility', symbol:'Mg(OH)₂', name:'insoluble', hint:'OH⁻ → 대부분 난용성',              group:'용해도 규칙' },
+  { type:'solubility', symbol:'Na₂CO₃',  name:'soluble',   hint:'Na⁺ 염 → 모두 가용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'K₂CO₃',   name:'soluble',   hint:'K⁺ 염 → 모두 가용성',             group:'용해도 규칙' },
+  { type:'solubility', symbol:'CaCO₃',   name:'insoluble', hint:'CO₃²⁻ → 대부분 난용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'BaCO₃',   name:'insoluble', hint:'CO₃²⁻ → 대부분 난용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'Na₃PO₄',  name:'soluble',   hint:'Na⁺ 염 → 모두 가용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'Ca₃(PO₄)₂',name:'insoluble',hint:'PO₄³⁻ → 대부분 난용성',           group:'용해도 규칙' },
+  { type:'solubility', symbol:'Ag₃PO₄',  name:'insoluble', hint:'PO₄³⁻ → 대부분 난용성',           group:'용해도 규칙' },
+  { type:'solubility', symbol:'Na₂S',    name:'soluble',   hint:'Na⁺ 염 → 모두 가용성',            group:'용해도 규칙' },
+  { type:'solubility', symbol:'FeS',     name:'insoluble', hint:'S²⁻ → 대부분 난용성',              group:'용해도 규칙' },
+  { type:'solubility', symbol:'BaCrO₄',  name:'insoluble', hint:'침전물 형성 예시 (Ch.7)',           group:'용해도 규칙' },
+];
+
+let currentFilter = 'all';
+
+// ── 한국어 이름 lookup ──────────────────────────────
+const korNames = {
+  // 원소
+  'hydrogen':'수소','helium':'헬륨','lithium':'리튬','beryllium':'베릴륨',
+  'boron':'붕소','carbon':'탄소','nitrogen':'질소','oxygen':'산소',
+  'fluorine':'플루오린','neon':'네온','sodium':'소듐(나트륨)','magnesium':'마그네슘',
+  'aluminum':'알루미늄','silicon':'규소','phosphorus':'인','sulfur':'황',
+  'chlorine':'염소','argon':'아르곤','potassium':'포타슘(칼륨)','calcium':'칼슘',
+  'scandium':'스칸듐','titanium':'타이타늄','vanadium':'바나듐','chromium':'크로뮴',
+  'manganese':'망가니즈','iron':'철','cobalt':'코발트','nickel':'니켈',
+  'copper':'구리','zinc':'아연','arsenic':'비소','bromine':'브로민',
+  'krypton':'크립톤','rubidium':'루비듐','strontium':'스트론튬','silver':'은',
+  'cadmium':'카드뮴','tin':'주석','antimony':'안티모니','iodine':'아이오딘',
+  'xenon':'제논','cesium':'세슘','barium':'바륨','tungsten':'텅스텐',
+  'platinum':'백금','gold':'금','mercury':'수은','lead':'납',
+  'bismuth':'비스무트','radium':'라듐','uranium':'우라늄',
+  'selenium':'셀레늄','tellurium':'텔루륨','radon':'라돈','francium':'프랑슘',
+  // 관용명 한국명
+  'ferric':'제이철 이온 (Fe³⁺)','ferrous':'제일철 이온 (Fe²⁺)',
+  'cupric':'제이구리 이온 (Cu²⁺)','cuprous':'제일구리 이온 (Cu⁺)',
+  'cobaltic':'제이코발트 이온 (Co³⁺)','cobaltous':'제일코발트 이온 (Co²⁺)',
+  'stannic':'제이주석 이온 (Sn⁴⁺)','stannous':'제일주석 이온 (Sn²⁺)',
+  'plumbic':'제이납 이온 (Pb⁴⁺)','plumbous':'제일납 이온 (Pb²⁺)',
+  'mercuric':'제이수은 이온 (Hg²⁺)','mercurous':'제일수은 이온 (Hg₂²⁺)',
+  // 수소/수소화 이온
+  'hydrogen ion':'수소 이온','hydride ion':'수소화 이온','sodium ion':'소듐 이온','potassium ion':'포타슘 이온',
+  'cesium ion':'세슘 이온','magnesium ion':'마그네슘 이온','calcium ion':'칼슘 이온',
+  'barium ion':'바륨 이온','aluminum ion':'알루미늄 이온','silver ion':'은 이온',
+  'zinc ion':'아연 이온','fluoride ion':'플루오린화 이온','chloride ion':'염화 이온',
+  'bromide ion':'브로민화 이온','iodide ion':'아이오딘화 이온',
+  'oxide ion':'산화 이온','sulfide ion':'황화 이온','nitride ion':'질화 이온',
+  'hydride ion':'수소화 이온',
+  // 유형2 이온
+  'iron(ii) ion':'철(II) 이온','iron(iii) ion':'철(III) 이온',
+  'copper(i) ion':'구리(I) 이온','copper(ii) ion':'구리(II) 이온',
+  'cobalt(ii) ion':'코발트(II) 이온','cobalt(iii) ion':'코발트(III) 이온',
+  'tin(ii) ion':'주석(II) 이온','tin(iv) ion':'주석(IV) 이온',
+  'lead(ii) ion':'납(II) 이온','lead(iv) ion':'납(IV) 이온',
+  'manganese(ii) ion':'망가니즈(II) 이온','chromium(iii) ion':'크로뮴(III) 이온',
+  'nickel(ii) ion':'니켈(II) 이온','mercury(i) ion':'수은(I) 이온',
+  'mercury(ii) ion':'수은(II) 이온',
+  // 다원자 이온
+  'ammonium':'암모늄','hydroxide':'수산화','nitrite':'아질산',
+  'nitrate':'질산','sulfite':'아황산','sulfate':'황산',
+  'hydrogen sulfate':'황산 수소','carbonate':'탄산','bicarbonate':'탄산수소',
+  'hypochlorite':'하이포아염소산','chlorite':'아염소산','chlorate':'염소산',
+  'perchlorate':'과염소산','chromate':'크로뮴산','dichromate':'다이크로뮴산',
+  'permanganate':'과망가니즈산','acetate':'아세트산','cyanide':'사이안화',
+  'thiocyanate':'싸이오사이안화','peroxide':'과산화',
+  'phosphate':'인산','hydrogen phosphate':'인산수소','dihydrogen phosphate':'인산이수소',
+  // 유형I 화합물
+  'sodium chloride':'염화 소듐','potassium iodide':'아이오딘화 포타슘',
+  'calcium sulfide':'황화 칼슘','cesium bromide':'브로민화 세슘',
+  'magnesium oxide':'산화 마그네슘','aluminum chloride':'염화 알루미늄',
+  'calcium chloride':'염화 칼슘','magnesium bromide':'브로민화 마그네슘',
+  'calcium oxide':'산화 칼슘','potassium chloride':'염화 포타슘',
+  'lithium oxide':'산화 리튬','sodium sulfide':'황화 소듐',
+  'silver chloride':'염화 은','zinc oxide':'산화 아연',
+  'aluminum oxide':'산화 알루미늄','barium fluoride':'플루오린화 바륨',
+  'strontium bromide':'브로민화 스트론튬',
+  // 유형II 화합물
+  'iron(iii) chloride':'염화 철(III)','iron(ii) chloride':'염화 철(II)',
+  'iron(ii) sulfide':'황화 철(II)','iron(iii) oxide':'산화 철(III)',
+  'copper(i) bromide':'브로민화 구리(I)','copper(ii) bromide':'브로민화 구리(II)',
+  'lead(iv) oxide':'산화 납(IV)','lead(ii) oxide':'산화 납(II)',
+  'tin(ii) chloride':'염화 주석(II)','tin(iv) chloride':'염화 주석(IV)',
+  'cobalt(ii) chloride':'염화 코발트(II)','cobalt(ii) bromide':'브로민화 코발트(II)',
+  'chromium(iii) chloride':'염화 크로뮴(III)','chromium(iv) oxide':'산화 크로뮴(IV)',
+  'manganese(iv) oxide':'산화 망가니즈(IV)','mercury(ii) chloride':'염화 수은(II)',
+  // 유형III 화합물
+  'carbon monoxide':'일산화 탄소','carbon dioxide':'이산화 탄소',
+  'nitrogen dioxide':'이산화 질소','dinitrogen monoxide':'일산화 이질소',
+  'dinitrogen tetroxide':'사산화 이질소','dinitrogen trioxide':'삼산화 이질소',
+  'dinitrogen pentoxide':'오산화 이질소','sulfur dioxide':'이산화 황',
+  'sulfur trioxide':'삼산화 황','sulfur hexafluoride':'육플루오린화 황',
+  'phosphorus trichloride':'삼염화 인','phosphorus pentachloride':'오염화 인',
+  'carbon tetrachloride':'사염화 탄소','chlorine trifluoride':'삼플루오린화 염소',
+  // 다원자이온 화합물
+  'sodium hydroxide':'수산화 소듐','potassium hydroxide':'수산화 포타슘',
+  'sodium carbonate':'탄산 소듐','sodium bicarbonate':'탄산수소 소듐',
+  'nitric acid':'질산','calcium hydroxide':'수산화 칼슘',
+  'ammonium chloride':'염화 암모늄','ammonium sulfate':'황산 암모늄',
+  'ammonium acetate':'아세트산 암모늄','magnesium nitrate':'질산 마그네슘',
+  'iron(ii) sulfate':'황산 철(II)','iron(iii) phosphate':'인산 철(III)',
+  'cobalt(ii) nitrate':'질산 코발트(II)','cobalt(iii) nitrate':'질산 코발트(III)',
+  'copper(ii) sulfate':'황산 구리(II)','potassium chlorate':'염소산 포타슘',
+  'potassium perchlorate':'과염소산 포타슘','ammonium perchlorate':'과염소산 암모늄',
+  'potassium permanganate':'과망가니즈산 포타슘','potassium dichromate':'다이크로뮴산 포타슘',
+  // 산
+  'hydrofluoric acid':'플루오린화 수소산(불산)',
+  'hydrochloric acid':'염화 수소산(염산)',
+  'hydrobromic acid':'브로민화 수소산',
+  'hydroiodic acid':'아이오딘화 수소산',
+  'hydrocyanic acid':'사이안화 수소산','hydrosulfuric acid':'황화 수소산',
+  'nitrous acid':'아질산','sulfuric acid':'황산','sulfurous acid':'아황산',
+  'phosphoric acid':'인산','acetic acid':'아세트산',
+  'perchloric acid':'과염소산','chloric acid':'염소산',
+  'chlorous acid':'아염소산','hypochlorous acid':'하이포아염소산',
+  // 전하구분 추가
+  'iron(ii) oxide':'산화 철(II)','iron(ii) bromide':'브로민화 철(II)',
+  'iron(iii) bromide':'브로민화 철(III)','iron(ii) sulfate':'황산 철(II)',
+  'iron(iii) sulfate':'황산 철(III)','iron(ii) hydroxide':'수산화 철(II)',
+  'iron(iii) hydroxide':'수산화 철(III)','iron(ii) nitrate':'질산 철(II)',
+  'iron(iii) nitrate':'질산 철(III)','iron(ii) sulfide':'황화 철(II)',
+  'iron(iii) sulfide':'황화 철(III)',
+  'copper(i) chloride':'염화 구리(I)','copper(ii) chloride':'염화 구리(II)',
+  'copper(i) oxide':'산화 구리(I)','copper(ii) oxide':'산화 구리(II)',
+  'copper(i) sulfide':'황화 구리(I)','copper(ii) sulfide':'황화 구리(II)',
+  'copper(i) bromide':'브로민화 구리(I)','copper(i) sulfate':'황산 구리(I)',
+  'cobalt(iii) chloride':'염화 코발트(III)','cobalt(ii) oxide':'산화 코발트(II)',
+  'cobalt(iii) oxide':'산화 코발트(III)','cobalt(ii) sulfide':'황화 코발트(II)',
+  'cobalt(iii) sulfide':'황화 코발트(III)',
+  'tin(ii) oxide':'산화 주석(II)','tin(iv) oxide':'산화 주석(IV)',
+  'tin(ii) sulfide':'황화 주석(II)','tin(iv) sulfide':'황화 주석(IV)',
+  'tin(ii) bromide':'브로민화 주석(II)','tin(iv) bromide':'브로민화 주석(IV)',
+  'lead(ii) chloride':'염화 납(II)','lead(iv) chloride':'염화 납(IV)',
+  'lead(ii) sulfide':'황화 납(II)','lead(iv) sulfide':'황화 납(IV)',
+  'lead(ii) nitrate':'질산 납(II)',
+  'mercury(i) chloride':'염화 수은(I)','mercury(i) oxide':'산화 수은(I)',
+  'mercury(ii) oxide':'산화 수은(II)','mercury(i) sulfate':'황산 수은(I)',
+  'mercury(ii) sulfate':'황산 수은(II)',
+  'chromium(ii) chloride':'염화 크로뮴(II)',
+  'chromium(ii) oxide':'산화 크로뮴(II)','chromium(iii) oxide':'산화 크로뮴(III)',
+  'chromium(ii) sulfate':'황산 크로뮴(II)','chromium(iii) sulfate':'황산 크로뮴(III)',
+  'manganese(ii) chloride':'염화 망가니즈(II)',
+  'manganese(ii) oxide':'산화 망가니즈(II)','manganese(ii) sulfide':'황화 망가니즈(II)',
+  // 용해도
+  'soluble':'가용성 (물에 녹음)','insoluble':'불용성 (물에 녹지 않음)',
+};
+
+function getKor(name) {
+  const key = name.toLowerCase().replace(/\s*\(\s*([ivx]+)\s*\)/g, (_, r) => `(${r})`);
+  return korNames[key] || '';
+}
+let queue = [];
+let currentIdx = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let wrongItems = [];
+let answered = false;
+
+function getFiltered() {
+  if (currentFilter === 'all') return allItems;
+  return allItems.filter(i => i.type === currentFilter);
+}
+
+const ALL_FILTERS = ['all','element','ion1','ion2','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility','oldname'];
+
+function setFilter(f) {
+  currentFilter = f;
+  ALL_FILTERS.forEach(k => {
+    const el = document.getElementById('f-'+k);
+    if (el) el.classList.toggle('active', k === f);
+  });
+  startQuiz();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  queue = shuffle(getFiltered());
+  currentIdx = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  wrongItems = [];
+  answered = false;
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  renderQuestion();
+  updateScore();
+}
+
+function renderQuestion() {
+  const el = queue[currentIdx];
+  document.getElementById('symbol').textContent = el.symbol;
+  document.getElementById('group-tag').textContent = el.group;
+
+  const chargeBadge = document.getElementById('charge-badge');
+  const atomicNum = document.getElementById('atomic-num');
+
+  if (el.type === 'element') {
+    chargeBadge.textContent = '';
+    atomicNum.textContent = `원자번호 ${el.num}`;
+  } else if (el.type === 'ion1' || el.type === 'ion2' || el.type === 'poly') {
+    chargeBadge.textContent = `전하: ${el.charge}`;
+    atomicNum.textContent = '이온 이름을 입력하세요';
+  } else if (el.type === 'solubility') {
+    chargeBadge.textContent = el.hint ? `💡 ${el.hint}` : '';
+    atomicNum.textContent = '"soluble" 또는 "insoluble" 입력';
+  } else if (el.type === 'valence') {
+    chargeBadge.textContent = el.hint ? `💡 ${el.hint}` : '';
+    atomicNum.textContent = '전하 포함 영어 이름 입력 (예: iron(ii) chloride)';
+  } else if (el.type === 'oldname') {
+    chargeBadge.textContent = `전하: ${el.charge}`;
+    atomicNum.textContent = '관용명(old name) 입력 (예: ferric, cuprous)';
+  } else {
+    chargeBadge.textContent = el.hint ? `[${el.hint}]` : '';
+    atomicNum.textContent = '화합물 영어 이름을 입력하세요';
+  }
+
+  document.getElementById('answer-input').value = '';
+  document.getElementById('answer-input').className = 'answer-input';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('submit-btn').textContent = '확인';
+  document.getElementById('progress-fill').style.width = `${(currentIdx / queue.length) * 100}%`;
+  document.getElementById('progress-text').textContent = `${currentIdx + 1} / ${queue.length}`;
+  document.getElementById('remain-count').textContent = queue.length - currentIdx;
+  answered = false;
+  document.getElementById('answer-input').focus();
+}
+
+function submitAnswer() {
+  if (answered) { nextQuestion(); return; }
+  const input = document.getElementById('answer-input');
+  const raw = input.value.trim();
+  if (!raw) return;
+  answered = true;
+
+  const correct = queue[currentIdx].name.toLowerCase();
+  const kor = getKor(correct);
+
+  const normalize = s => s
+    .toLowerCase()
+    .replace(/\s*\(\s*([ivx]+)\s*\)/g, (_, r) => `(${r})`)
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const userNorm = normalize(raw);
+  const correctNorm = normalize(correct);
+  const isCorrect = userNorm === correctNorm;
+
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    input.classList.add('correct');
+    fb.innerHTML = kor ? `✓ 정답! <span style="color:var(--accent3);font-size:12px">(${kor})</span>` : '✓ 정답!';
+    fb.className = 'feedback correct';
+    correctCount++;
+  } else {
+    input.classList.add('wrong');
+    fb.innerHTML = kor
+      ? `✗ <b>${correct}</b> <span style="color:var(--accent3);font-size:12px">(${kor})</span>`
+      : `✗ 정답: ${correct}`;
+    fb.className = 'feedback wrong';
+    wrongCount++;
+    wrongItems.push({ symbol: queue[currentIdx].symbol, correct, kor, userAnswer: raw });
+  }
+
+  updateScore();
+  document.getElementById('submit-btn').textContent = '다음 →';
+}
+
+function skipQuestion() {
+  const el = queue[currentIdx];
+  const kor = getKor(el.name);
+  const fb = document.getElementById('feedback');
+  document.getElementById('answer-input').className = 'answer-input wrong';
+  fb.innerHTML = kor
+    ? `정답: <b>${el.name}</b> <span style="color:var(--accent3);font-size:12px">(${kor})</span>`
+    : `정답: ${el.name}`;
+  fb.className = 'feedback hint';
+  wrongCount++;
+  wrongItems.push({ symbol: el.symbol, correct: el.name, kor, userAnswer: '(패스)' });
+  answered = true;
+  updateScore();
+  document.getElementById('submit-btn').textContent = '다음 →';
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= queue.length) showResult();
+  else renderQuestion();
+}
+
+function updateScore() {
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('wrong-count').textContent = wrongCount;
+  document.getElementById('remain-count').textContent = queue.length - currentIdx - (answered ? 1 : 0);
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('hidden');
+  const total = queue.length;
+  const pct = Math.round((correctCount / total) * 100);
+  let emoji = '😅', title = '더 연습해봐!';
+  if (pct >= 90) { emoji = '🏆'; title = '완벽해!'; }
+  else if (pct >= 70) { emoji = '🎉'; title = '잘했어!'; }
+  else if (pct >= 50) { emoji = '💪'; title = '절반은 맞았어!'; }
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-score').textContent = `${correctCount} / ${total} 정답 (${pct}%)`;
+  const container = document.getElementById('wrong-items');
+  container.innerHTML = '';
+  if (wrongItems.length === 0) {
+    document.getElementById('wrong-list-container').style.display = 'none';
+  } else {
+    document.getElementById('wrong-list-container').style.display = '';
+    wrongItems.forEach(w => {
+      const div = document.createElement('div');
+      div.className = 'wrong-item';
+      div.innerHTML = `
+        <span class="wrong-sym">${w.symbol}</span>
+        <span class="wrong-ans">${w.userAnswer}</span>
+        <span class="wrong-correct">${w.correct}${w.kor ? `<br><span style="color:var(--accent3);font-size:10px">${w.kor}</span>` : ''}</span>
+      `;
+      container.appendChild(div);
+    });
+  }
+}
+
+function restartQuiz() {
+  startQuiz();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') submitAnswer(); });
+startQuiz();
+</script>
+</body>
+</html>
