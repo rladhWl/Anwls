@@ -359,10 +359,100 @@
     color: var(--accent3);
     margin-bottom: 4px;
   }
+
+  /* ── 모드 탭 ── */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .mode-tab {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 700; }
+
+  /* ── 플래시카드 ── */
+  .flashcard-wrap { perspective: 1000px; margin-bottom: 16px; cursor: pointer; }
+  .flashcard {
+    width: 100%; height: 220px; position: relative;
+    transform-style: preserve-3d; transition: transform 0.5s ease; border-radius: 16px;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .fc-front, .fc-back {
+    position: absolute; width: 100%; height: 220px; border-radius: 16px;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 24px 20px; text-align: center;
+  }
+  .fc-front { background: var(--surface); border: 1px solid var(--border); transform: rotateY(0deg); }
+  .fc-front::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg,transparent,var(--accent),transparent);
+    opacity:.5; border-radius: 16px 16px 0 0;
+  }
+  .fc-back { background: var(--surface); border: 1px solid var(--accent); transform: rotateY(180deg); }
+  .fc-symbol { font-family:'Space Mono',monospace; font-size:52px; font-weight:700; color:var(--accent); text-shadow:0 0 30px rgba(124,255,212,0.3); line-height:1; margin-bottom:8px; }
+  .fc-group { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); border:1px solid var(--border); border-radius:20px; padding:2px 10px; margin-bottom:10px; }
+  .fc-tap { font-size:10px; color:var(--muted); margin-top:10px; letter-spacing:1px; }
+  .fc-hint { font-size:11px; color:var(--muted); margin-top:6px; }
+  .fc-en { font-family:'Space Mono',monospace; font-size:20px; font-weight:700; color:var(--accent); margin-bottom:6px; }
+  .fc-ko { font-size:18px; color:var(--accent3); font-weight:700; margin-bottom:4px; }
+  .fc-extra { font-size:12px; color:var(--muted); margin-top:4px; }
+  .fc-nav { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .fc-nav-btn {
+    font-family:'Space Mono',monospace; font-size:18px; background:var(--surface);
+    border:1px solid var(--border); color:var(--text); border-radius:10px;
+    padding:10px 18px; cursor:pointer; transition:all 0.15s; flex:1;
+  }
+  .fc-nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .fc-progress { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); text-align:center; flex:1; }
+  .fc-shuffle {
+    width:100%; padding:10px; background:transparent; border:1px solid var(--border);
+    border-radius:10px; color:var(--muted); font-family:'Space Mono',monospace;
+    font-size:11px; letter-spacing:1px; cursor:pointer; transition:all 0.15s; margin-bottom:10px;
+  }
+  .fc-shuffle:hover { border-color:var(--accent3); color:var(--accent3); }
+
+  /* ── 목록 보기 ── */
+  .list-search {
+    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:10px;
+    padding:10px 14px; font-family:'Noto Sans KR',sans-serif; font-size:14px;
+    color:var(--text); outline:none; margin-bottom:12px; transition:border-color 0.2s;
+  }
+  .list-search:focus { border-color:var(--accent); }
+  .list-scroll { max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; }
+  .list-scroll::-webkit-scrollbar { width:4px; }
+  .list-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .list-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .list-table th { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); }
+  .list-table td { padding:7px 8px; border-bottom:1px solid rgba(42,42,58,0.5); vertical-align:middle; }
+  .list-table tr:hover td { background:rgba(124,255,212,0.03); }
+  .td-sym { font-family:'Space Mono',monospace; font-weight:700; color:var(--accent); font-size:14px; width:90px; }
+  .td-en { color:var(--text); }
+  .td-ko { color:var(--accent3); font-size:11px; }
+  .td-group { color:var(--muted); font-size:10px; }
+  .list-filter-row { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
 </style>
 </head>
 <body>
 <div class="quiz-container">
+
+  <!-- 모드 탭 -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-quiz" onclick="switchMode('quiz')">📝 퀴즈</button>
+    <button class="mode-tab" id="tab-flash" onclick="switchMode('flash')">🃏 플래시카드</button>
+    <button class="mode-tab" id="tab-list" onclick="switchMode('list')">📋 목록 보기</button>
+  </div>
 
   <!-- Quiz Screen -->
   <div id="quiz-screen">
@@ -433,6 +523,87 @@
       </div>
 
       <button class="btn btn-primary" onclick="restartQuiz()">다시 풀기</button>
+    </div>
+  </div>
+
+  <!-- 플래시카드 화면 -->
+  <div id="flash-screen" class="hidden">
+    <div class="header">
+      <h1>🃏 플래시카드</h1>
+      <div class="filter-row" id="flash-filter-row">
+        <button class="filter-btn active" id="ff-all" onclick="setStudyFilter('all')">전체</button>
+        <button class="filter-btn" id="ff-element" onclick="setStudyFilter('element')">원소</button>
+        <button class="filter-btn" id="ff-ion1" onclick="setStudyFilter('ion1')">유형1 이온</button>
+        <button class="filter-btn" id="ff-ion2" onclick="setStudyFilter('ion2')">유형2 이온</button>
+        <button class="filter-btn" id="ff-oldname" onclick="setStudyFilter('oldname')">관용명</button>
+        <button class="filter-btn" id="ff-poly" onclick="setStudyFilter('poly')">다원자 이온</button>
+        <button class="filter-btn" id="ff-comp1" onclick="setStudyFilter('comp1')">유형I 화합물</button>
+        <button class="filter-btn" id="ff-comp2" onclick="setStudyFilter('comp2')">유형II 화합물</button>
+        <button class="filter-btn" id="ff-comp3" onclick="setStudyFilter('comp3')">유형III 화합물</button>
+        <button class="filter-btn" id="ff-comppoly" onclick="setStudyFilter('comppoly')">다원자이온 화합물</button>
+        <button class="filter-btn" id="ff-acid" onclick="setStudyFilter('acid')">산(acid)</button>
+        <button class="filter-btn" id="ff-valence" onclick="setStudyFilter('valence')">전하구분</button>
+        <button class="filter-btn" id="ff-solubility" onclick="setStudyFilter('solubility')">용해도</button>
+      </div>
+    </div>
+
+    <button class="fc-shuffle" onclick="shuffleFlash()">🔀 섞기</button>
+
+    <div class="flashcard-wrap" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="fc-front">
+          <div class="fc-group" id="fc-group">원소</div>
+          <div class="fc-symbol" id="fc-symbol">H</div>
+          <div class="fc-hint" id="fc-front-hint"></div>
+          <div class="fc-tap">탭해서 뒤집기 ▼</div>
+        </div>
+        <div class="fc-back">
+          <div class="fc-en" id="fc-en">hydrogen</div>
+          <div class="fc-ko" id="fc-ko">수소</div>
+          <div class="fc-extra" id="fc-extra"></div>
+          <div class="fc-tap" style="margin-top:12px">탭해서 앞으로 ▲</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-nav">
+      <button class="fc-nav-btn" onclick="fcPrev()">←</button>
+      <div class="fc-progress" id="fc-progress">1 / 1</div>
+      <button class="fc-nav-btn" onclick="fcNext()">→</button>
+    </div>
+  </div>
+
+  <!-- 목록 보기 화면 -->
+  <div id="list-screen" class="hidden">
+    <div class="header">
+      <h1>📋 목록 보기</h1>
+      <div class="filter-row">
+        <button class="filter-btn active" id="lf-all" onclick="setListFilter('all')">전체</button>
+        <button class="filter-btn" id="lf-element" onclick="setListFilter('element')">원소</button>
+        <button class="filter-btn" id="lf-ion1" onclick="setListFilter('ion1')">유형1 이온</button>
+        <button class="filter-btn" id="lf-ion2" onclick="setListFilter('ion2')">유형2 이온</button>
+        <button class="filter-btn" id="lf-oldname" onclick="setListFilter('oldname')">관용명</button>
+        <button class="filter-btn" id="lf-poly" onclick="setListFilter('poly')">다원자 이온</button>
+        <button class="filter-btn" id="lf-comp1" onclick="setListFilter('comp1')">유형I 화합물</button>
+        <button class="filter-btn" id="lf-comp2" onclick="setListFilter('comp2')">유형II 화합물</button>
+        <button class="filter-btn" id="lf-comp3" onclick="setListFilter('comp3')">유형III 화합물</button>
+        <button class="filter-btn" id="lf-comppoly" onclick="setListFilter('comppoly')">다원자이온 화합물</button>
+        <button class="filter-btn" id="lf-acid" onclick="setListFilter('acid')">산(acid)</button>
+        <button class="filter-btn" id="lf-valence" onclick="setListFilter('valence')">전하구분</button>
+        <button class="filter-btn" id="lf-solubility" onclick="setListFilter('solubility')">용해도</button>
+      </div>
+    </div>
+    <input class="list-search" id="list-search" placeholder="🔍 검색 (기호, 영어, 한국어)..." oninput="renderList()">
+    <div class="list-scroll">
+      <table class="list-table">
+        <thead><tr>
+          <th>기호/화학식</th>
+          <th>영어 이름</th>
+          <th>한국어</th>
+          <th>분류</th>
+        </tr></thead>
+        <tbody id="list-body"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1103,7 +1274,138 @@ function restartQuiz() {
   startQuiz();
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Enter') submitAnswer(); });
+// ── 모드 전환 ──────────────────────────────────────
+let currentMode = 'quiz';
+function switchMode(mode) {
+  currentMode = mode;
+  ['quiz','flash','list'].forEach(m => {
+    document.getElementById(m+'-screen').classList.toggle('hidden', m !== mode);
+    document.getElementById('tab-'+m).classList.toggle('active', m === mode);
+  });
+  if (mode === 'flash') initFlash();
+  if (mode === 'list') { currentListFilter = 'all'; renderList(); }
+}
+
+// ── 플래시카드 ──────────────────────────────────────
+let fcDeck = [];
+let fcIdx = 0;
+let fcFilter = 'all';
+
+function setStudyFilter(f) {
+  fcFilter = f;
+  const filters = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
+  filters.forEach(k => {
+    const el = document.getElementById('ff-'+k);
+    if (el) el.classList.toggle('active', k === f);
+  });
+  initFlash();
+}
+
+function initFlash() {
+  fcDeck = fcFilter === 'all' ? [...allItems] : allItems.filter(i => i.type === fcFilter);
+  fcIdx = 0;
+  renderFlashcard();
+}
+
+function shuffleFlash() {
+  for (let i = fcDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcDeck[i], fcDeck[j]] = [fcDeck[j], fcDeck[i]];
+  }
+  fcIdx = 0;
+  document.getElementById('flashcard').classList.remove('flipped');
+  renderFlashcard();
+}
+
+function renderFlashcard() {
+  if (!fcDeck.length) return;
+  const el = fcDeck[fcIdx];
+  const kor = getKor(el.name);
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('fc-group').textContent = el.group;
+  document.getElementById('fc-symbol').textContent = el.symbol;
+
+  // 앞면 힌트
+  let frontHint = '';
+  if (el.type === 'element') frontHint = `원자번호 ${el.num || ''}`;
+  else if (el.charge) frontHint = `전하: ${el.charge}`;
+  else if (el.hint) frontHint = el.hint;
+  document.getElementById('fc-front-hint').textContent = frontHint;
+
+  // 뒷면
+  document.getElementById('fc-en').textContent = el.name;
+  document.getElementById('fc-ko').textContent = kor || '';
+  let extra = '';
+  if (el.type === 'oldname') extra = `체계명: ${el.name === 'ferric' ? 'iron(III)' : el.name === 'ferrous' ? 'iron(II)' : el.name === 'cupric' ? 'copper(II)' : el.name === 'cuprous' ? 'copper(I)' : el.name === 'stannic' ? 'tin(IV)' : el.name === 'stannous' ? 'tin(II)' : el.name === 'plumbic' ? 'lead(IV)' : el.name === 'plumbous' ? 'lead(II)' : el.name === 'mercuric' ? 'mercury(II)' : el.name === 'mercurous' ? 'mercury(I)' : el.name === 'cobaltic' ? 'cobalt(III)' : 'cobalt(II)'}`;
+  document.getElementById('fc-extra').textContent = extra;
+  document.getElementById('fc-progress').textContent = `${fcIdx + 1} / ${fcDeck.length}`;
+}
+
+function flipCard() {
+  document.getElementById('flashcard').classList.toggle('flipped');
+}
+
+function fcNext() {
+  fcIdx = (fcIdx + 1) % fcDeck.length;
+  renderFlashcard();
+}
+
+function fcPrev() {
+  fcIdx = (fcIdx - 1 + fcDeck.length) % fcDeck.length;
+  renderFlashcard();
+}
+
+// ── 목록 보기 ──────────────────────────────────────
+let currentListFilter = 'all';
+
+function setListFilter(f) {
+  currentListFilter = f;
+  const filters = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
+  filters.forEach(k => {
+    const el = document.getElementById('lf-'+k);
+    if (el) el.classList.toggle('active', k === f);
+  });
+  renderList();
+}
+
+function renderList() {
+  const query = (document.getElementById('list-search').value || '').toLowerCase();
+  let items = currentListFilter === 'all' ? allItems : allItems.filter(i => i.type === currentListFilter);
+  if (query) {
+    items = items.filter(i => {
+      const kor = getKor(i.name).toLowerCase();
+      return i.symbol.toLowerCase().includes(query) ||
+             i.name.toLowerCase().includes(query) ||
+             kor.includes(query) ||
+             i.group.toLowerCase().includes(query);
+    });
+  }
+  const tbody = document.getElementById('list-body');
+  tbody.innerHTML = '';
+  items.forEach(item => {
+    const kor = getKor(item.name);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-sym">${item.symbol}</td>
+      <td class="td-en">${item.name}</td>
+      <td class="td-ko">${kor}</td>
+      <td class="td-group">${item.group}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 키보드 단축키: 플래시카드에서 ← → Space
+document.addEventListener('keydown', e => {
+  if (currentMode === 'quiz') {
+    if (e.key === 'Enter') submitAnswer();
+  } else if (currentMode === 'flash') {
+    if (e.key === 'ArrowRight') fcNext();
+    else if (e.key === 'ArrowLeft') fcPrev();
+    else if (e.key === ' ') { e.preventDefault(); flipCard(); }
+  }
+});
+
 startQuiz();
 </script>
 </body>
