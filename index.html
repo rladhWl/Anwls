@@ -539,6 +539,16 @@
   <div id="flash-screen" class="hidden">
     <div class="header">
       <h1>🃏 플래시카드</h1>
+      <!-- 방향 선택 -->
+      <div class="filter-row" style="margin-bottom:6px;">
+        <button class="filter-btn active" id="fd-sym2en"  onclick="setFlashDir('sym2en')">기호→영어</button>
+        <button class="filter-btn"        id="fd-sym2ko"  onclick="setFlashDir('sym2ko')">기호→한국어</button>
+        <button class="filter-btn"        id="fd-en2sym"  onclick="setFlashDir('en2sym')">영어→기호</button>
+        <button class="filter-btn"        id="fd-en2ko"   onclick="setFlashDir('en2ko')">영어→한국어</button>
+        <button class="filter-btn"        id="fd-ko2en"   onclick="setFlashDir('ko2en')">한국어→영어</button>
+        <button class="filter-btn"        id="fd-ko2sym"  onclick="setFlashDir('ko2sym')">한국어→기호</button>
+      </div>
+      <!-- 범위 필터 -->
       <div class="filter-row" id="flash-filter-row">
         <button class="filter-btn active" id="ff-all" onclick="setStudyFilter('all')">전체</button>
         <button class="filter-btn" id="ff-element" onclick="setStudyFilter('element')">원소</button>
@@ -564,9 +574,10 @@
           <div class="fc-group" id="fc-group">원소</div>
           <div class="fc-symbol" id="fc-symbol">H</div>
           <div class="fc-hint" id="fc-front-hint"></div>
-          <div class="fc-tap">탭해서 뒤집기 ▼</div>
+          <div class="fc-tap">탭해서 정답 보기 ▼</div>
         </div>
         <div class="fc-back">
+          <div class="fc-group" id="fc-back-group" style="margin-bottom:8px"></div>
           <div class="fc-en" id="fc-en">hydrogen</div>
           <div class="fc-ko" id="fc-ko">수소</div>
           <div class="fc-extra" id="fc-extra"></div>
@@ -1381,7 +1392,18 @@ function switchMode(mode) {
 let fcDeck = [];
 let fcIdx = 0;
 let fcFilters = new Set(['all']);
+let fcDirection = 'sym2en';
 const FC_FILTERS = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
+const FC_DIRS    = ['sym2en','sym2ko','en2sym','en2ko','ko2en','ko2sym'];
+
+function setFlashDir(d) {
+  fcDirection = d;
+  FC_DIRS.forEach(k => {
+    const el = document.getElementById('fd-'+k);
+    if (el) el.classList.toggle('active', k === d);
+  });
+  initFlash();
+}
 
 function setStudyFilter(f) {
   if (f === 'all') {
@@ -1403,7 +1425,11 @@ function setStudyFilter(f) {
 }
 
 function initFlash() {
-  fcDeck = fcFilters.has('all') ? [...allItems] : allItems.filter(i => fcFilters.has(i.type));
+  let deck = fcFilters.has('all') ? [...allItems] : allItems.filter(i => fcFilters.has(i.type));
+  if (['sym2ko','en2ko','ko2en','ko2sym'].includes(fcDirection)) {
+    deck = deck.filter(i => getKor(i.name));
+  }
+  fcDeck = deck;
   fcIdx = 0;
   renderFlashcard();
 }
@@ -1420,24 +1446,46 @@ function shuffleFlash() {
 
 function renderFlashcard() {
   if (!fcDeck.length) return;
-  const el = fcDeck[fcIdx];
-  const kor = getKor(el.name);
+  const item = fcDeck[fcIdx];
+  const kor = getKor(item.name);
   document.getElementById('flashcard').classList.remove('flipped');
-  document.getElementById('fc-group').textContent = el.group;
-  document.getElementById('fc-symbol').textContent = el.symbol;
+
+  // 방향별 앞면/뒷면 결정
+  let frontText, backMain, backSub, frontHint = '';
+  switch (fcDirection) {
+    case 'sym2en': frontText = item.symbol; backMain = item.name; backSub = kor;        break;
+    case 'sym2ko': frontText = item.symbol; backMain = kor;       backSub = item.name;  break;
+    case 'en2sym': frontText = item.name;   backMain = item.symbol; backSub = kor;      break;
+    case 'en2ko':  frontText = item.name;   backMain = kor;       backSub = item.symbol; break;
+    case 'ko2en':  frontText = kor;         backMain = item.name; backSub = item.symbol; break;
+    case 'ko2sym': frontText = kor;         backMain = item.symbol; backSub = item.name; break;
+    default:       frontText = item.symbol; backMain = item.name; backSub = kor;
+  }
 
   // 앞면 힌트
-  let frontHint = '';
-  if (el.type === 'element') frontHint = `원자번호 ${el.num || ''}`;
-  else if (el.charge) frontHint = `전하: ${el.charge}`;
-  else if (el.hint) frontHint = el.hint;
-  document.getElementById('fc-front-hint').textContent = frontHint;
+  if (['sym2en','sym2ko'].includes(fcDirection)) {
+    if (item.type === 'element') frontHint = `원자번호 ${item.num || ''}`;
+    else if (item.charge) frontHint = `전하: ${item.charge}`;
+    else if (item.hint) frontHint = item.hint;
+  } else {
+    frontHint = item.group;
+  }
 
-  // 뒷면
-  document.getElementById('fc-en').textContent = el.name;
-  document.getElementById('fc-ko').textContent = kor || '';
-  let extra = '';
-  if (el.type === 'oldname') extra = `체계명: ${el.name === 'ferric' ? 'iron(III)' : el.name === 'ferrous' ? 'iron(II)' : el.name === 'cupric' ? 'copper(II)' : el.name === 'cuprous' ? 'copper(I)' : el.name === 'stannic' ? 'tin(IV)' : el.name === 'stannous' ? 'tin(II)' : el.name === 'plumbic' ? 'lead(IV)' : el.name === 'plumbous' ? 'lead(II)' : el.name === 'mercuric' ? 'mercury(II)' : el.name === 'mercurous' ? 'mercury(I)' : el.name === 'cobaltic' ? 'cobalt(III)' : 'cobalt(II)'}`;
+  // 관용명 체계명
+  const sysMap = {ferric:'iron(III)',ferrous:'iron(II)',cupric:'copper(II)',cuprous:'copper(I)',cobaltic:'cobalt(III)',cobaltous:'cobalt(II)',stannic:'tin(IV)',stannous:'tin(II)',plumbic:'lead(IV)',plumbous:'lead(II)',mercuric:'mercury(II)',mercurous:'mercury(I)'};
+  const extra = item.type === 'oldname' ? `체계명: ${sysMap[item.name] || ''}` : '';
+
+  // 뒷면 메인 크기: 기호면 크게
+  const enEl = document.getElementById('fc-en');
+  enEl.style.fontSize = (fcDirection === 'en2sym' || fcDirection === 'ko2sym') ? '42px' : '20px';
+
+  document.getElementById('fc-group').textContent = item.group;
+  document.getElementById('fc-symbol').textContent = frontText;
+  document.getElementById('fc-front-hint').textContent = frontHint;
+  const backGroup = document.getElementById('fc-back-group');
+  if (backGroup) backGroup.textContent = item.group;
+  enEl.textContent = backMain;
+  document.getElementById('fc-ko').textContent = backSub || '';
   document.getElementById('fc-extra').textContent = extra;
   document.getElementById('fc-progress').textContent = `${fcIdx + 1} / ${fcDeck.length}`;
 }
