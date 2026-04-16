@@ -715,7 +715,7 @@ const allItems = [
   { type:'ion2', symbol:'Mn²⁺', name:'manganese(II) ion', charge:'2+', group:'유형2 이온' },
   { type:'ion2', symbol:'Cr³⁺', name:'chromium(III) ion', charge:'3+', group:'유형2 이온' },
   { type:'ion2', symbol:'Ni²⁺', name:'nickel(II) ion',  charge:'2+', group:'유형2 이온' },
-  { type:'ion2', symbol:'Hg₂²⁺',name:'mercury(I) ion',  charge:'2+', group:'유형2 이온' },
+  { type:'ion2', symbol:'Hg₂²⁺',name:'mercury(I) ion',  charge:'1+×2쌍 (총2+)', group:'유형2 이온' },
   { type:'ion2', symbol:'Hg²⁺', name:'mercury(II) ion', charge:'2+', group:'유형2 이온' },
 
   // ── 관용명 퀴즈 (ferric/ferrous 등) ─────────────────
@@ -959,7 +959,7 @@ const allItems = [
   { type:'solubility', symbol:'BaCrO₄',  name:'insoluble', hint:'침전물 형성 예시 (Ch.7)',           group:'용해도 규칙' },
 ];
 
-let currentFilter = 'all';
+let currentFilters = new Set(['all']); // 복수 선택 가능
 
 // ── 한국어 이름 lookup ──────────────────────────────
 const korNames = {
@@ -1115,17 +1115,32 @@ function setDirection(d) {
 }
 
 function getFiltered() {
-  if (currentFilter === 'all') return allItems;
-  return allItems.filter(i => i.type === currentFilter);
+  if (currentFilters.has('all')) return allItems;
+  return allItems.filter(i => currentFilters.has(i.type));
 }
 
 const ALL_FILTERS = ['all','element','ion1','ion2','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility','oldname'];
 
 function setFilter(f) {
-  currentFilter = f;
+  if (f === 'all') {
+    // 전체 선택하면 나머지 해제
+    currentFilters = new Set(['all']);
+  } else {
+    // 전체 해제
+    currentFilters.delete('all');
+    // 토글
+    if (currentFilters.has(f)) {
+      currentFilters.delete(f);
+      // 아무것도 없으면 전체로 돌아감
+      if (currentFilters.size === 0) currentFilters.add('all');
+    } else {
+      currentFilters.add(f);
+    }
+  }
+  // 버튼 활성화 업데이트
   ALL_FILTERS.forEach(k => {
     const el = document.getElementById('f-'+k);
-    if (el) el.classList.toggle('active', k === f);
+    if (el) el.classList.toggle('active', currentFilters.has(k));
   });
   startQuiz();
 }
@@ -1365,20 +1380,30 @@ function switchMode(mode) {
 // ── 플래시카드 ──────────────────────────────────────
 let fcDeck = [];
 let fcIdx = 0;
-let fcFilter = 'all';
+let fcFilters = new Set(['all']);
+const FC_FILTERS = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
 
 function setStudyFilter(f) {
-  fcFilter = f;
-  const filters = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
-  filters.forEach(k => {
+  if (f === 'all') {
+    fcFilters = new Set(['all']);
+  } else {
+    fcFilters.delete('all');
+    if (fcFilters.has(f)) {
+      fcFilters.delete(f);
+      if (fcFilters.size === 0) fcFilters.add('all');
+    } else {
+      fcFilters.add(f);
+    }
+  }
+  FC_FILTERS.forEach(k => {
     const el = document.getElementById('ff-'+k);
-    if (el) el.classList.toggle('active', k === f);
+    if (el) el.classList.toggle('active', fcFilters.has(k));
   });
   initFlash();
 }
 
 function initFlash() {
-  fcDeck = fcFilter === 'all' ? [...allItems] : allItems.filter(i => i.type === fcFilter);
+  fcDeck = fcFilters.has('all') ? [...allItems] : allItems.filter(i => fcFilters.has(i.type));
   fcIdx = 0;
   renderFlashcard();
 }
@@ -1432,21 +1457,31 @@ function fcPrev() {
 }
 
 // ── 목록 보기 ──────────────────────────────────────
-let currentListFilter = 'all';
+let listFilters = new Set(['all']);
+const LIST_FILTERS = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
 
 function setListFilter(f) {
-  currentListFilter = f;
-  const filters = ['all','element','ion1','ion2','oldname','poly','comp1','comp2','comp3','comppoly','acid','valence','solubility'];
-  filters.forEach(k => {
+  if (f === 'all') {
+    listFilters = new Set(['all']);
+  } else {
+    listFilters.delete('all');
+    if (listFilters.has(f)) {
+      listFilters.delete(f);
+      if (listFilters.size === 0) listFilters.add('all');
+    } else {
+      listFilters.add(f);
+    }
+  }
+  LIST_FILTERS.forEach(k => {
     const el = document.getElementById('lf-'+k);
-    if (el) el.classList.toggle('active', k === f);
+    if (el) el.classList.toggle('active', listFilters.has(k));
   });
   renderList();
 }
 
 function renderList() {
   const query = (document.getElementById('list-search').value || '').toLowerCase();
-  let items = currentListFilter === 'all' ? allItems : allItems.filter(i => i.type === currentListFilter);
+  let items = listFilters.has('all') ? allItems : allItems.filter(i => listFilters.has(i.type));
   if (query) {
     items = items.filter(i => {
       const kor = getKor(i.name).toLowerCase();
