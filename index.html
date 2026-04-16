@@ -458,6 +458,15 @@
   <div id="quiz-screen">
     <div class="header">
       <h1>⚗ Element Quiz</h1>
+      <!-- 문제 방향 선택 -->
+      <div class="filter-row" style="margin-bottom:6px;">
+        <button class="filter-btn active" id="d-sym2en"  onclick="setDirection('sym2en')">기호→영어</button>
+        <button class="filter-btn"        id="d-sym2ko"  onclick="setDirection('sym2ko')">기호→한국어</button>
+        <button class="filter-btn"        id="d-en2sym"  onclick="setDirection('en2sym')">영어→기호</button>
+        <button class="filter-btn"        id="d-en2ko"   onclick="setDirection('en2ko')">영어→한국어</button>
+        <button class="filter-btn"        id="d-ko2en"   onclick="setDirection('ko2en')">한국어→영어</button>
+        <button class="filter-btn"        id="d-ko2sym"  onclick="setDirection('ko2sym')">한국어→기호</button>
+      </div>
       <div class="filter-row">
         <button class="filter-btn active" id="f-all"      onclick="setFilter('all')">전체</button>
         <button class="filter-btn"        id="f-element"  onclick="setFilter('element')">원소</button>
@@ -1092,6 +1101,18 @@ let correctCount = 0;
 let wrongCount = 0;
 let wrongItems = [];
 let answered = false;
+let currentDirection = 'sym2en'; // 기본: 기호→영어
+
+const ALL_DIRECTIONS = ['sym2en','sym2ko','en2sym','en2ko','ko2en','ko2sym'];
+
+function setDirection(d) {
+  currentDirection = d;
+  ALL_DIRECTIONS.forEach(k => {
+    const el = document.getElementById('d-'+k);
+    if (el) el.classList.toggle('active', k === d);
+  });
+  startQuiz();
+}
 
 function getFiltered() {
   if (currentFilter === 'all') return allItems;
@@ -1119,7 +1140,12 @@ function shuffle(arr) {
 }
 
 function startQuiz() {
-  queue = shuffle(getFiltered());
+  // 방향에 따라 한국어 없는 항목 필터링
+  let filtered = getFiltered();
+  if (currentDirection === 'sym2ko' || currentDirection === 'en2ko' || currentDirection === 'ko2en' || currentDirection === 'ko2sym') {
+    filtered = filtered.filter(i => getKor(i.name));
+  }
+  queue = shuffle(filtered);
   currentIdx = 0;
   correctCount = 0;
   wrongCount = 0;
@@ -1131,34 +1157,59 @@ function startQuiz() {
   updateScore();
 }
 
+// 문제 방향별 question/answer 추출
+function getQA(el) {
+  const kor = getKor(el.name);
+  switch (currentDirection) {
+    case 'sym2en':  return { q: el.symbol,  a: el.name,   qLabel: '영어 이름 입력',   aLabel: el.name };
+    case 'sym2ko':  return { q: el.symbol,  a: kor,        qLabel: '한국어 이름 입력', aLabel: kor };
+    case 'en2sym':  return { q: el.name,    a: el.symbol,  qLabel: '기호(화학식) 입력', aLabel: el.symbol };
+    case 'en2ko':   return { q: el.name,    a: kor,        qLabel: '한국어 이름 입력', aLabel: kor };
+    case 'ko2en':   return { q: kor,        a: el.name,   qLabel: '영어 이름 입력',   aLabel: el.name };
+    case 'ko2sym':  return { q: kor,        a: el.symbol,  qLabel: '기호(화학식) 입력', aLabel: el.symbol };
+    default:        return { q: el.symbol,  a: el.name,   qLabel: '영어 이름 입력',   aLabel: el.name };
+  }
+}
+
 function renderQuestion() {
   const el = queue[currentIdx];
-  document.getElementById('symbol').textContent = el.symbol;
+  const { q, a, qLabel } = getQA(el);
+  const kor = getKor(el.name);
+
+  // 문제 표시: 기호/화학식 크기로 표시
+  document.getElementById('symbol').textContent = q;
   document.getElementById('group-tag').textContent = el.group;
 
+  // 부가 정보
   const chargeBadge = document.getElementById('charge-badge');
   const atomicNum = document.getElementById('atomic-num');
 
-  if (el.type === 'element') {
-    chargeBadge.textContent = '';
-    atomicNum.textContent = `원자번호 ${el.num}`;
-  } else if (el.type === 'ion1' || el.type === 'ion2' || el.type === 'poly') {
-    chargeBadge.textContent = `전하: ${el.charge}`;
-    atomicNum.textContent = '이온 이름을 입력하세요';
-  } else if (el.type === 'solubility') {
-    chargeBadge.textContent = el.hint ? `💡 ${el.hint}` : '';
-    atomicNum.textContent = '"soluble" 또는 "insoluble" 입력';
-  } else if (el.type === 'valence') {
-    chargeBadge.textContent = el.hint ? `💡 ${el.hint}` : '';
-    atomicNum.textContent = '전하 포함 영어 이름 입력 (예: iron(ii) chloride)';
-  } else if (el.type === 'oldname') {
-    chargeBadge.textContent = `전하: ${el.charge}`;
-    atomicNum.textContent = '관용명(old name) 입력 (예: ferric, cuprous)';
+  // sym2en / sym2ko 일 때만 기존 힌트 표시
+  if (currentDirection === 'sym2en' || currentDirection === 'sym2ko') {
+    if (el.type === 'element') {
+      chargeBadge.textContent = '';
+      atomicNum.textContent = `원자번호 ${el.num || ''}`;
+    } else if (el.charge) {
+      chargeBadge.textContent = `전하: ${el.charge}`;
+      atomicNum.textContent = qLabel;
+    } else if (el.hint) {
+      chargeBadge.textContent = `💡 ${el.hint}`;
+      atomicNum.textContent = qLabel;
+    } else {
+      chargeBadge.textContent = '';
+      atomicNum.textContent = qLabel;
+    }
+  } else if (currentDirection === 'en2sym' || currentDirection === 'en2ko') {
+    // 영어 이름이 문제 → 분류 힌트
+    chargeBadge.textContent = el.hint ? `💡 ${el.hint}` : (el.charge ? `전하: ${el.charge}` : '');
+    atomicNum.textContent = qLabel;
   } else {
-    chargeBadge.textContent = el.hint ? `[${el.hint}]` : '';
-    atomicNum.textContent = '화합물 영어 이름을 입력하세요';
+    // 한국어가 문제
+    chargeBadge.textContent = el.hint ? `💡 ${el.hint}` : (el.charge ? `전하: ${el.charge}` : '');
+    atomicNum.textContent = qLabel;
   }
 
+  document.getElementById('answer-input').placeholder = qLabel + '...';
   document.getElementById('answer-input').value = '';
   document.getElementById('answer-input').className = 'answer-input';
   document.getElementById('feedback').textContent = '';
@@ -1178,8 +1229,9 @@ function submitAnswer() {
   if (!raw) return;
   answered = true;
 
-  const correct = queue[currentIdx].name.toLowerCase();
-  const kor = getKor(correct);
+  const el = queue[currentIdx];
+  const { a, aLabel } = getQA(el);
+  const kor = getKor(el.name);
 
   const normalize = s => s
     .toLowerCase()
@@ -1187,41 +1239,65 @@ function submitAnswer() {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const userNorm = normalize(raw);
-  const correctNorm = normalize(correct);
+  // 기호 비교: 첨자 없이 입력해도 정답 (Fe2O3 = Fe₂O₃)
+  const stripSub = s => s.replace(/[₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/g, c => '0123456789+-'['₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻'.indexOf(c)] || c);
+  const isSymDir = currentDirection === 'en2sym' || currentDirection === 'ko2sym';
+  const userNorm = isSymDir ? stripSub(raw.trim()) : normalize(raw);
+  const correctNorm = isSymDir ? stripSub(a.trim()) : normalize(a);
   const isCorrect = userNorm === correctNorm;
 
+  // 피드백: 정답 + 나머지 정보 보여주기
   const fb = document.getElementById('feedback');
+  const fullInfo = buildFullInfo(el);
+
   if (isCorrect) {
     input.classList.add('correct');
-    fb.innerHTML = kor ? `✓ 정답! <span style="color:var(--accent3);font-size:12px">(${kor})</span>` : '✓ 정답!';
+    fb.innerHTML = `✓ 정답! ${fullInfo}`;
     fb.className = 'feedback correct';
     correctCount++;
   } else {
     input.classList.add('wrong');
-    fb.innerHTML = kor
-      ? `✗ <b>${correct}</b> <span style="color:var(--accent3);font-size:12px">(${kor})</span>`
-      : `✗ 정답: ${correct}`;
+    fb.innerHTML = `✗ <b>${a}</b> ${fullInfo}`;
     fb.className = 'feedback wrong';
     wrongCount++;
-    wrongItems.push({ symbol: queue[currentIdx].symbol, correct, kor, userAnswer: raw });
+    wrongItems.push({ symbol: el.symbol, correct: a, kor, userAnswer: raw, name: el.name });
   }
 
   updateScore();
   document.getElementById('submit-btn').textContent = '다음 →';
 }
 
+// 정답 후 부가 정보 — 문제에 쓰인 것 제외하고 나머지 다 보여줌
+function buildFullInfo(el) {
+  const kor = getKor(el.name);
+  const dir = currentDirection;
+  const parts = [];
+
+  // 기호가 문제가 아니었으면 기호 보여주기
+  if (dir !== 'sym2en' && dir !== 'sym2ko') {
+    parts.push(`<span style="color:var(--accent);font-size:12px">[${el.symbol}]</span>`);
+  }
+  // 영어가 문제/정답이 아니었으면 영어 보여주기
+  if (dir !== 'sym2en' && dir !== 'en2sym' && dir !== 'en2ko' && dir !== 'ko2en') {
+    parts.push(`<span style="color:var(--text);font-size:12px">${el.name}</span>`);
+  }
+  // 한국어가 문제/정답이 아니었으면 한국어 보여주기
+  if (kor && dir !== 'sym2ko' && dir !== 'en2ko' && dir !== 'ko2en' && dir !== 'ko2sym') {
+    parts.push(`<span style="color:var(--accent3);font-size:12px">(${kor})</span>`);
+  }
+  return parts.length ? '<br><small>' + parts.join(' ') + '</small>' : '';
+}
+
 function skipQuestion() {
   const el = queue[currentIdx];
+  const { a } = getQA(el);
   const kor = getKor(el.name);
   const fb = document.getElementById('feedback');
   document.getElementById('answer-input').className = 'answer-input wrong';
-  fb.innerHTML = kor
-    ? `정답: <b>${el.name}</b> <span style="color:var(--accent3);font-size:12px">(${kor})</span>`
-    : `정답: ${el.name}`;
+  fb.innerHTML = `정답: <b>${a}</b> ${buildFullInfo(el)}`;
   fb.className = 'feedback hint';
   wrongCount++;
-  wrongItems.push({ symbol: el.symbol, correct: el.name, kor, userAnswer: '(패스)' });
+  wrongItems.push({ symbol: el.symbol, correct: a, kor, userAnswer: '(패스)', name: el.name });
   answered = true;
   updateScore();
   document.getElementById('submit-btn').textContent = '다음 →';
