@@ -1265,19 +1265,28 @@ function submitAnswer() {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // 첨자/윗첨자 → 일반 문자 변환 (H⁺ = H+, Fe²⁺ = Fe2+, O²⁻ = O2- 등)
+  // 첨자/윗첨자/특수기호 → 일반 문자 변환
   const stripSup = s => s
     .replace(/⁰/g,'0').replace(/¹/g,'1').replace(/²/g,'2').replace(/³/g,'3')
     .replace(/⁴/g,'4').replace(/⁵/g,'5').replace(/⁶/g,'6').replace(/⁷/g,'7')
-    .replace(/⁸/g,'8').replace(/⁹/g,'9').replace(/⁺/g,'+').replace(/⁻/g,'-')
+    .replace(/⁸/g,'8').replace(/⁹/g,'9')
+    .replace(/⁺/g,'+')
+    .replace(/⁻/g,'-')   // 윗첨자 마이너스 U+207B
+    .replace(/−/g,'-')   // 수학 마이너스 U+2212
     .replace(/₀/g,'0').replace(/₁/g,'1').replace(/₂/g,'2').replace(/₃/g,'3')
     .replace(/₄/g,'4').replace(/₅/g,'5').replace(/₆/g,'6').replace(/₇/g,'7')
-    .replace(/₈/g,'8').replace(/₉/g,'9');
+    .replace(/₈/g,'8').replace(/₉/g,'9')
+    .replace(/\s+/g,'')  // 공백 제거 (기호 비교시)
+    .trim();
 
   const isSymDir = currentDirection === 'en2sym' || currentDirection === 'ko2sym';
-  // 기호 방향: 첨자 변환 후 비교 / 나머지: normalize + 첨자 변환
-  const userNorm    = stripSup(isSymDir ? raw.trim().toUpperCase() : normalize(raw));
-  const correctNorm = stripSup(isSymDir ? a.trim().toUpperCase()   : normalize(a));
+  // 모든 방향에서 첨자 변환 적용, 기호 방향은 추가로 대소문자 무시
+  const userNorm    = isSymDir
+    ? stripSup(raw.trim()).toUpperCase()
+    : stripSup(normalize(raw));
+  const correctNorm = isSymDir
+    ? stripSup(a.trim()).toUpperCase()
+    : stripSup(normalize(a));
   const isCorrect = userNorm === correctNorm;
 
   // 피드백: 정답 + 나머지 정보 보여주기
