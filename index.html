@@ -1265,11 +1265,19 @@ function submitAnswer() {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // 기호 비교: 첨자 없이 입력해도 정답 (Fe2O3 = Fe₂O₃)
-  const stripSub = s => s.replace(/[₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/g, c => '0123456789+-'['₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻'.indexOf(c)] || c);
+  // 첨자/윗첨자 → 일반 문자 변환 (H⁺ = H+, Fe²⁺ = Fe2+, O²⁻ = O2- 등)
+  const stripSup = s => s
+    .replace(/⁰/g,'0').replace(/¹/g,'1').replace(/²/g,'2').replace(/³/g,'3')
+    .replace(/⁴/g,'4').replace(/⁵/g,'5').replace(/⁶/g,'6').replace(/⁷/g,'7')
+    .replace(/⁸/g,'8').replace(/⁹/g,'9').replace(/⁺/g,'+').replace(/⁻/g,'-')
+    .replace(/₀/g,'0').replace(/₁/g,'1').replace(/₂/g,'2').replace(/₃/g,'3')
+    .replace(/₄/g,'4').replace(/₅/g,'5').replace(/₆/g,'6').replace(/₇/g,'7')
+    .replace(/₈/g,'8').replace(/₉/g,'9');
+
   const isSymDir = currentDirection === 'en2sym' || currentDirection === 'ko2sym';
-  const userNorm = isSymDir ? stripSub(raw.trim()) : normalize(raw);
-  const correctNorm = isSymDir ? stripSub(a.trim()) : normalize(a);
+  // 기호 방향: 첨자 변환 후 비교 / 나머지: normalize + 첨자 변환
+  const userNorm    = stripSup(isSymDir ? raw.trim().toUpperCase() : normalize(raw));
+  const correctNorm = stripSup(isSymDir ? a.trim().toUpperCase()   : normalize(a));
   const isCorrect = userNorm === correctNorm;
 
   // 피드백: 정답 + 나머지 정보 보여주기
