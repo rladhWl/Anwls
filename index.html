@@ -1275,17 +1275,16 @@ function submitAnswer() {
     .replace(/−/g,'-')   // 수학 마이너스 U+2212
     .replace(/₀/g,'0').replace(/₁/g,'1').replace(/₂/g,'2').replace(/₃/g,'3')
     .replace(/₄/g,'4').replace(/₅/g,'5').replace(/₆/g,'6').replace(/₇/g,'7')
-    .replace(/₈/g,'8').replace(/₉/g,'9')
-    .replace(/\s+/g,'')  // 공백 제거 (기호 비교시)
-    .trim();
+    .replace(/₈/g,'8').replace(/₉/g,'9');
 
   const isSymDir = currentDirection === 'en2sym' || currentDirection === 'ko2sym';
-  // 모든 방향에서 첨자 변환 적용, 기호 방향은 추가로 대소문자 무시
+  // 기호 방향: 첨자변환 + 공백제거 + 대소문자무시
+  // 이름 방향: normalize(소문자+로마자정리) + 첨자변환
   const userNorm    = isSymDir
-    ? stripSup(raw.trim()).toUpperCase()
+    ? stripSup(raw.trim()).replace(/\s+/g,'').toUpperCase()
     : stripSup(normalize(raw));
   const correctNorm = isSymDir
-    ? stripSup(a.trim()).toUpperCase()
+    ? stripSup(a.trim()).replace(/\s+/g,'').toUpperCase()
     : stripSup(normalize(a));
   const isCorrect = userNorm === correctNorm;
 
